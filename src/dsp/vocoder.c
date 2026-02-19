@@ -76,7 +76,8 @@ typedef struct {
     float  freq_high;     /* Hz */
     float  attack_ms;     /* ms */
     float  release_ms;    /* ms */
-    float  mod_gain;      /* 0..3 */
+    float  mod_gain;      /* 0..6 modulator input gain */
+    float  output_gain;   /* 0..6 output gain */
     float  mix;           /* 0..1 wet/dry */
     float  carrier_mix;   /* 0..1 noise for unvoiced */
 
@@ -222,7 +223,8 @@ static void* v2_create_instance(const char *module_dir, const char *config_json)
     v->freq_high   = 8000.0f;
     v->attack_ms   = 5.0f;
     v->release_ms  = 50.0f;
-    v->mod_gain    = 1.0f;
+    v->mod_gain    = 2.0f;
+    v->output_gain = 2.0f;
     v->mix         = 1.0f;
     v->carrier_mix = 0.1f;
     v->noise_seed  = 12345;
@@ -252,6 +254,7 @@ static void v2_process_block(void *instance, int16_t *audio_inout, int frames) {
     float att = v->att_coeff;
     float rel = v->rel_coeff;
     float mod_gain = v->mod_gain;
+    float out_gain = v->output_gain;
     float wet = v->mix;
     float dry = 1.0f - wet;
     float noise_mix = v->carrier_mix;
@@ -293,8 +296,8 @@ static void v2_process_block(void *instance, int16_t *audio_inout, int frames) {
             out_r += car_band_r * env_r;
         }
 
-        /* Scale output (more bands = more energy) */
-        float scale = 2.0f / sqrtf((float)n);
+        /* Scale output (more bands = more energy), apply output gain */
+        float scale = 2.0f / sqrtf((float)n) * out_gain;
         out_l *= scale;
         out_r *= scale;
 
@@ -331,7 +334,9 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (json_get_float(val, "release", &fv) == 0)
             v->release_ms = clampf(fv, 5.0f, 500.0f);
         if (json_get_float(val, "mod_gain", &fv) == 0)
-            v->mod_gain = clampf(fv, 0.0f, 3.0f);
+            v->mod_gain = clampf(fv, 0.0f, 6.0f);
+        if (json_get_float(val, "output_gain", &fv) == 0)
+            v->output_gain = clampf(fv, 0.0f, 6.0f);
         if (json_get_float(val, "mix", &fv) == 0)
             v->mix = clampf(fv, 0.0f, 1.0f);
         if (json_get_float(val, "carrier_mix", &fv) == 0)
@@ -364,7 +369,9 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         v->release_ms = clampf(fv, 5.0f, 500.0f);
         recalc_bands(v);
     } else if (strcmp(key, "mod_gain") == 0) {
-        v->mod_gain = clampf(fv, 0.0f, 3.0f);
+        v->mod_gain = clampf(fv, 0.0f, 6.0f);
+    } else if (strcmp(key, "output_gain") == 0) {
+        v->output_gain = clampf(fv, 0.0f, 6.0f);
     } else if (strcmp(key, "mix") == 0) {
         v->mix = clampf(fv, 0.0f, 1.0f);
     } else if (strcmp(key, "carrier_mix") == 0) {
@@ -393,6 +400,8 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         return snprintf(buf, buf_len, "%.1f", v->release_ms);
     if (strcmp(key, "mod_gain") == 0)
         return snprintf(buf, buf_len, "%.2f", v->mod_gain);
+    if (strcmp(key, "output_gain") == 0)
+        return snprintf(buf, buf_len, "%.2f", v->output_gain);
     if (strcmp(key, "mix") == 0)
         return snprintf(buf, buf_len, "%.2f", v->mix);
     if (strcmp(key, "carrier_mix") == 0)
@@ -403,10 +412,10 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         return snprintf(buf, buf_len,
             "{\"bands\":%d,\"freq_low\":%.1f,\"freq_high\":%.1f,"
             "\"attack\":%.1f,\"release\":%.1f,\"mod_gain\":%.2f,"
-            "\"mix\":%.2f,\"carrier_mix\":%.2f}",
+            "\"output_gain\":%.2f,\"mix\":%.2f,\"carrier_mix\":%.2f}",
             v->bands, v->freq_low, v->freq_high,
             v->attack_ms, v->release_ms, v->mod_gain,
-            v->mix, v->carrier_mix);
+            v->output_gain, v->mix, v->carrier_mix);
     }
 
     /* Shadow UI hierarchy */
@@ -416,8 +425,8 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
             "\"levels\":{"
                 "\"root\":{"
                     "\"children\":null,"
-                    "\"knobs\":[\"bands\",\"freq_low\",\"freq_high\",\"attack\",\"release\",\"mod_gain\",\"mix\",\"carrier_mix\"],"
-                    "\"params\":[\"bands\",\"freq_low\",\"freq_high\",\"attack\",\"release\",\"mod_gain\",\"mix\",\"carrier_mix\"]"
+                    "\"knobs\":[\"mod_gain\",\"output_gain\",\"bands\",\"mix\",\"freq_low\",\"freq_high\",\"attack\",\"release\"],"
+                    "\"params\":[\"mod_gain\",\"output_gain\",\"bands\",\"mix\",\"freq_low\",\"freq_high\",\"attack\",\"release\",\"carrier_mix\"]"
                 "}"
             "}"
         "}";
@@ -437,7 +446,8 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
             "{\"key\":\"freq_high\",\"name\":\"High Freq\",\"type\":\"float\",\"min\":2000,\"max\":12000,\"default\":8000,\"step\":100,\"unit\":\"Hz\"},"
             "{\"key\":\"attack\",\"name\":\"Attack\",\"type\":\"float\",\"min\":0.1,\"max\":50,\"default\":5,\"step\":0.5,\"unit\":\"ms\"},"
             "{\"key\":\"release\",\"name\":\"Release\",\"type\":\"float\",\"min\":5,\"max\":500,\"default\":50,\"step\":5,\"unit\":\"ms\"},"
-            "{\"key\":\"mod_gain\",\"name\":\"Mod Gain\",\"type\":\"float\",\"min\":0,\"max\":3,\"default\":1,\"step\":0.05},"
+            "{\"key\":\"mod_gain\",\"name\":\"Mod Gain\",\"type\":\"float\",\"min\":0,\"max\":6,\"default\":2,\"step\":0.1},"
+            "{\"key\":\"output_gain\",\"name\":\"Out Gain\",\"type\":\"float\",\"min\":0,\"max\":6,\"default\":2,\"step\":0.1},"
             "{\"key\":\"mix\",\"name\":\"Mix\",\"type\":\"float\",\"min\":0,\"max\":1,\"default\":1,\"step\":0.01},"
             "{\"key\":\"carrier_mix\",\"name\":\"Unvoiced\",\"type\":\"float\",\"min\":0,\"max\":1,\"default\":0.1,\"step\":0.01}"
         "]";
