@@ -1,0 +1,15 @@
+{
+    "id": "vocoder",
+    "name": "Vocoder",
+    "abbrev": "VOC",
+    "version": "0.1.0",
+    "description": "Channel vocoder - uses mic/line-in as modulator",
+    "author": "charlesvestal",
+    "license": "MIT",
+    "dsp": "vocoder.so",
+    "api_version": 2,
+    "capabilities": {
+        "chainable": true,
+        "component_type": "audio_fx"
+    }
+}
