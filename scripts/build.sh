@@ -61,6 +61,7 @@ ${CROSS_PREFIX}gcc -Ofast -shared -fPIC \
 # Copy files to dist (use cat to avoid ExtFS deallocation issues with Docker)
 echo "Packaging..."
 cat src/module.json > dist/vocoder/module.json
+[ -f src/help.json ] && cat src/help.json > dist/vocoder/help.json
 cat build/vocoder.so > dist/vocoder/vocoder.so
 chmod +x dist/vocoder/vocoder.so
 

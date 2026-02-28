@@ -1,0 +1,84 @@
+{
+  "title": "Vocoder",
+  "children": [
+    {
+      "title": "Overview",
+      "lines": [
+        "Channel vocoder.",
+        "",
+        "Analyzes spectral",
+        "envelope of mic/",
+        "line-in (modulator)",
+        "and applies it to",
+        "synth (carrier).",
+        "",
+        "8 to 32 bands with",
+        "bandpass filters."
+      ]
+    },
+    {
+      "title": "Controls",
+      "children": [
+        {
+          "title": "Knob Mapping",
+          "lines": [
+            "Knob 1: Mod Gain",
+            " Modulator input",
+            " level (0-6x)",
+            "",
+            "Knob 2: Output Gain",
+            " Output level (0-6x)",
+            "",
+            "Knob 3: Bands",
+            " 8, 16, 24, or 32",
+            " frequency bands",
+            "",
+            "Knob 4: Mix",
+            " Dry/wet blend"
+          ]
+        },
+        {
+          "title": "Frequency & Env",
+          "lines": [
+            "Knob 5: Freq Low",
+            " Band range start",
+            " (80-500 Hz)",
+            "",
+            "Knob 6: Freq High",
+            " Band range end",
+            " (2-12 kHz)",
+            "",
+            "Knob 7: Attack",
+            " Envelope follower",
+            " (0.1-50ms)",
+            "",
+            "Knob 8: Release",
+            " Envelope follower",
+            " (5-500ms)",
+            "",
+            "Carrier Mix: noise",
+            " content (via menu)"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Setup",
+      "lines": [
+        "Place in Signal",
+        "Chain after a synth.",
+        "",
+        "Carrier: synth audio",
+        "from the chain.",
+        "",
+        "Modulator: mic or",
+        "line-in from Move's",
+        "audio input.",
+        "",
+        "Speak/sing into mic",
+        "while playing synth",
+        "for vocal synthesis."
+      ]
+    }
+  ]
+}
